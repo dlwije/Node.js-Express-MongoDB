@@ -68,10 +68,17 @@ reviewSchema.statics.calcAverageRatings = async function (tourId) {
   ]);
   console.log(stats);
 
-  await Tour.findByIdAndUpdate(tourId, {
-    ratingsQuantity: stats[0].nRating,
-    ratingsAverage: stats[0].avgRating,
-  });
+  if (stats.length > 0) {
+    await Tour.findByIdAndUpdate(tourId, {
+      ratingsQuantity: stats[0].nRating,
+      ratingsAverage: stats[0].avgRating,
+    });
+  } else {
+    await Tour.findByIdAndUpdate(tourId, {
+      ratingsQuantity: 0,
+      ratingsAverage: 4.5,
+    });
+  }
 };
 
 reviewSchema.post('save', function () {
@@ -79,6 +86,23 @@ reviewSchema.post('save', function () {
   this.constructor.calcAverageRatings(this.tour);
   // We cannot use Review.calcAverageRatings because of it initializes after this middleware.
   // That's why we use constructor
+});
+
+// findByIdAndUpdate
+// findByIdAndDelete
+// Behind above two functions it use the 'findOneAnd' expressions
+reviewSchema.pre(/^findOneAnd/, async function (next) {
+  // we need to get access to document so we basically run a simple query
+  this.r = await this.clone().findOne();
+  // console.log(this.r);
+  next();
+});
+
+reviewSchema.post(/^findOneAnd/, async function () {
+  // We did this calculation in here, POST middleware because we cannot do it in PRE,
+  // at that moment the DB not yet updated with changes either Delete or Update
+  // await this.clone().findOne() does not work here, query has already executed
+  await this.r.constructor.calcAverageRatings(this.r.tour);
 });
 
 const Review = mongoose.model('Review', reviewSchema);
