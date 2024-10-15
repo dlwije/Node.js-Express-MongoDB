@@ -118,6 +118,13 @@ const tourSchema = new mongoose.Schema(
   },
 );
 
+// -1 is for descending order and 1 for ascending order price and this is
+// Single field index
+/* tourSchema.index({ price: 1 }); */
+//  Composite or Compound field index
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+tourSchema.index({ slug: 1 });
+
 // This column will be available virtually only when we get the Data. column is not defined in the DB.
 // Here we use normal function instead of array function because we cannot access 'this' keyword inside array function.
 // We cannot use virtual columns in queries
