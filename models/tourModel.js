@@ -126,6 +126,8 @@ const tourSchema = new mongoose.Schema(
 //  Composite or Compound field index
 tourSchema.index({ price: 1, ratingsAverage: -1 });
 tourSchema.index({ slug: 1 });
+// We add here '2dsphere' because this is real points on the earth like sphere or 2dindex for fictional points
+tourSchema.index({ startLocation: '2dsphere' });
 
 // This column will be available virtually only when we get the Data. column is not defined in the DB.
 // Here we use normal function instead of array function because we cannot access 'this' keyword inside array function.

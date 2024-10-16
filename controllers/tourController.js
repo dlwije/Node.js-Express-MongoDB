@@ -2,6 +2,7 @@
 const Tour = require('../models/tourModel');
 const catchAsync = require('../utils/catchAsync');
 const factory = require('./handlerFactory');
+const AppError = require('../utils/appError');
 
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = '5';
@@ -111,6 +112,44 @@ exports.getMonthlyPlan = catchAsync(async (req, res, next) => {
     results: plan.length,
     data: {
       plan,
+    },
+  });
+});
+
+// 'tours-within/:distance/center/:latlng/unit/:unit',
+// /tours-within/233/center/25.133351117265963, 55.18344453811245/unit/mi  // This lot cleaner than above one
+
+exports.getToursWithin = catchAsync(async (req, res, next) => {
+  const { distance, latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+
+  // Radius means the distance we want to have in radius
+  // but it need to be convert into special unit called rediens
+  // To get it need to devide distance by radius of the earth. Radius in Miles 3963.2 and in KM 6378.1
+  const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1;
+
+  if (!lat || !lng) {
+    next(
+      new AppError(
+        'Please provide latitude and longitude in the format lat,lng.',
+        400,
+      ),
+    );
+  }
+
+  const tours = await Tour.find({
+    // Usually we tell lat first and longitude second but in GeoJSON it is opposite way
+    startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } },
+  });
+
+  // console.log(distance, lat, lng, unit, radius);
+
+  // We can check this answer correct or wrong by using MongoDB compass Tours Schema section by analysing it.
+  res.status(200).json({
+    status: 'success',
+    results: tours.length,
+    data: {
+      data: tours,
     },
   });
 });
