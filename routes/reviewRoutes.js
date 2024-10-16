@@ -9,6 +9,8 @@ const router = express.Router({ mergeParams: true });
 
 router.use(authController.protect);
 
+router.route('/get-dup-reviews').get(reviewController.getDuplicateReviews);
+
 router
   .route('/')
   .get(reviewController.getAllReviews)

@@ -3,6 +3,42 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const factory = require('./handlerFactory');
 
+exports.getUsersWithNoReviews = catchAsync(async (req, res, next) => {
+  const noReviewUsers = await User.aggregate([
+    {
+      // Perform left join from 'users' to 'reviews' collection
+      $lookup: {
+        from: 'reviews', // The name of the review collection
+        localField: '_id', // The field from users to match
+        foreignField: 'user', // The field from reviews to match
+        as: 'user_reviews', // The name of the new Array field for the joined reviews
+      },
+    },
+    {
+      // Filter users who have an empty 'user_review' array (no reviews made)
+      $match: {
+        user_reviews: { $size: 0 },
+      },
+    },
+    {
+      // Project only the user information, excluding the joined reviews
+      $project: {
+        _id: 1,
+        name: 1,
+        email: 1,
+        role: 1,
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      noReviewUsers,
+    },
+  });
+});
+
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
   Object.keys(obj).forEach((el) => {

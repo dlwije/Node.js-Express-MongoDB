@@ -1,5 +1,6 @@
 const Review = require('../models/reviewModel');
 const factory = require('./handlerFactory');
+const catchAsync = require('../utils/catchAsync');
 
 exports.setTourUserIds = (req, res, next) => {
   // console.log(req.body, req.params);
@@ -15,16 +16,24 @@ exports.createReview = factory.createOne(Review);
 exports.updateReview = factory.updateOne(Review);
 exports.deleteReview = factory.deleteOne(Review);
 
-/* exports.deleteReview = catchAsync(async (req, res, next) => {
-  const review = await Review.findByIdAndDelete(req.params.id);
+// Dev by me to just find the duplicate reviews with same tour and user
+exports.getDuplicateReviews = catchAsync(async (req, res, next) => {
+  const dupReviews = await Review.aggregate([
+    {
+      $group: {
+        _id: { tour: '$tour', user: '$user' },
+        numReviews: { $sum: 1 },
+      },
+    },
+    {
+      $match: { numReviews: { $gt: 1 } },
+    },
+  ]);
 
-  if (!review) {
-    return next(new AppError('No review found with that ID', 404));
-  }
-
-  res.status(204).json({
-    // 204 means No content
+  res.status(200).json({
     status: 'success',
-    data: null,
+    data: {
+      dupReviews,
+    },
   });
-}); */
+});

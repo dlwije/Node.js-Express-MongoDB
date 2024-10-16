@@ -11,7 +11,7 @@ router.post('/refreshToken', authController.refreshToken);
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 
-// from here downward all routes will be protect after this middleware
+// from here downward all routes will be protect means need to login after this middleware
 router.use(authController.protect);
 
 router.patch('/updateMyPassword', authController.updatePassword);
@@ -19,6 +19,9 @@ router.patch('/updateMyPassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);
 router.patch('/updateMe', userController.updateMe);
 router.delete('/deleteMe', userController.deleteMe);
+
+// Dev by dinesh lakmal
+router.get('/get-users-with-no-reviews', userController.getUsersWithNoReviews);
 
 router.use(authController.restrictTo('admin'));
 router
