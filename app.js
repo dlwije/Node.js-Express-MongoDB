@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -15,7 +16,14 @@ const reviewRouter = require('./routes/reviewRoutes');
 
 const app = express();
 
+app.set('view engine', 'pug');
+// We can use 'path.join' to get rid of slash adding or not kind of issues and bugs
+app.set('views', path.join(__dirname, 'views'));
+
 // 1) GLOBAL MIDDLEWARES
+// Serving static files
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Set security HTTP headers
 app.use(helmet());
 
@@ -34,7 +42,6 @@ app.use('/api', limiter);
 
 // Body parser, reading data from body into req.body. And set the size which can pass through body
 app.use(express.json({ limit: '10kb' }));
-// app.use(express.static(`${__dirname}/public`));
 
 // Data sanitization against NOSQL query injection
 app.use(mongoSanitize());
@@ -62,13 +69,17 @@ app.use((req, res, next) => {
   next();
 });
 
-// app.get("/api/v1/tours", getAllTours);
-// app.get("/api/v1/tours/:id", getTour)
-// app.post("/api/v1/tours", createTour);
-// app.patch("/api/v1/tours/:id", updateTour);
-// app.delete("/api/v1/tours/:id", deleteTour);
-
 // 3) ROUTES
+// Server side front end routes
+app.get('/', (req, res) => {
+  // This will check the file by going to the place we defined pug and the view folder assigned there
+  res.status(200).render('base', {
+    tour: 'The Forest Hiker',
+    user: 'Jonas',
+  });
+});
+
+// API Routes
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
