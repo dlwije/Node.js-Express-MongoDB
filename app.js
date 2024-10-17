@@ -13,6 +13,7 @@ const globalErrorHandler = require('./controllers/errorController');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
+const viewRouter = require('./routes/viewRoutes');
 
 const app = express();
 
@@ -71,24 +72,7 @@ app.use((req, res, next) => {
 
 // 3) ROUTES
 // Server side front end routes
-app.get('/', (req, res) => {
-  // This will check the file by going to the place we defined pug and the view folder assigned there
-  res.status(200).render('base', {
-    tour: 'The Forest Hiker',
-    user: 'Jonas',
-  });
-});
-
-app.get('/overview', (req, res) => {
-  res.status(200).render('overview', {
-    title: 'All Tours',
-  });
-});
-app.get('/tour', (req, res) => {
-  res.status(200).render('tour', {
-    title: 'The Forest Hiker Tour',
-  });
-});
+app.use('/', viewRouter);
 
 // API Routes
 app.use('/api/v1/tours', tourRouter);
