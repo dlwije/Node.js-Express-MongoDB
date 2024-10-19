@@ -7,6 +7,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 // const mongoSanitize = require('dompurify');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -43,6 +44,7 @@ app.use('/api', limiter);
 
 // Body parser, reading data from body into req.body. And set the size which can pass through body
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
 // Data sanitization against NOSQL query injection
 app.use(mongoSanitize());
@@ -72,30 +74,62 @@ app.use((req, res, next) => {
 
 // Added for map integration
 // Further HELMET configuration for Security Policy (CSP)
-const scriptSrcUrls = ['https://unpkg.com/', 'https://tile.openstreetmap.org'];
-const styleSrcUrls = [
-  'https://unpkg.com/',
-  'https://tile.openstreetmap.org',
-  'https://fonts.googleapis.com/',
-];
-const connectSrcUrls = ['https://unpkg.com', 'https://tile.openstreetmap.org'];
-const fontSrcUrls = ['fonts.googleapis.com', 'fonts.gstatic.com'];
+// const scriptSrcUrls = ['https://unpkg.com/', 'https://tile.openstreetmap.org'];
+// const styleSrcUrls = [
+//   'https://unpkg.com/',
+//   'https://tile.openstreetmap.org',
+//   'https://fonts.googleapis.com/',
+// ];
+// const connectSrcUrls = ['https://unpkg.com', 'https://tile.openstreetmap.org'];
+// const fontSrcUrls = ['fonts.googleapis.com', 'fonts.gstatic.com'];
+//
+// //set security http headers
+// app.use(
+//   helmet.contentSecurityPolicy({
+//     directives: {
+//       defaultSrc: [],
+//       connectSrc: ["'self'", ...connectSrcUrls],
+//       scriptSrc: ["'self'", ...scriptSrcUrls],
+//       styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
+//       workerSrc: ["'self'", 'blob:'],
+//       objectSrc: [],
+//       imgSrc: ["'self'", 'blob:', 'data:', 'https:'],
+//       fontSrc: ["'self'", ...fontSrcUrls],
+//     },
+//   }),
+// );
 
-//set security http headers
+// HTTP Security Headers
 app.use(
-  helmet.contentSecurityPolicy({
-    directives: {
-      defaultSrc: [],
-      connectSrc: ["'self'", ...connectSrcUrls],
-      scriptSrc: ["'self'", ...scriptSrcUrls],
-      styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
-      workerSrc: ["'self'", 'blob:'],
-      objectSrc: [],
-      imgSrc: ["'self'", 'blob:', 'data:', 'https:'],
-      fontSrc: ["'self'", ...fontSrcUrls],
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        // ... other directives
+        'script-src': [
+          "'self'", // allow scripts from your own domain
+          "'unsafe-inline'", // allow inline scripts (you may want to remove this depending on your needs)
+          'https://api.mapbox.com', // allow scripts from the Mapbox CDN
+          'https://cdnjs.cloudflare.com',
+        ],
+        'worker-src': [
+          "'self'", // allow web workers from your own domain
+          'http://localhost:8000', // allow web workers from the current host (development environment)
+          'https://api.mapbox.com', // allow web workers from the Mapbox CDN
+          'blob:', // allow web workers from blob URLs
+          'https://cdnjs.cloudflare.com',
+        ],
+        'connect-src': [
+          "'self'", // allow connections to your own domain
+          'https://api.mapbox.com', // allow connections to the Mapbox API
+          'https://events.mapbox.com', // allow connections to Mapbox events
+          'https://cdnjs.cloudflare.com',
+        ],
+      },
     },
   }),
 );
+
+app.use(helmet({ contentSecurityPolicy: false }));
 
 // 3) ROUTES
 // Server side front end routes
